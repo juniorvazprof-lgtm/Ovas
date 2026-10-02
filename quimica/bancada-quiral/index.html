@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bancada Quiral</title>
+<meta name="description" content="Bancada 3D de isomeria: enantiômeros no espelho, isomeria plana e polarímetro.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{color-scheme:dark;--ink:#ece6da;--mute:#9aa3a8;--glass:rgba(16,20,24,.86);--line:rgba(255,255,255,.12);--acc:#f0c24a;--sans:"Chivo",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{height:100%;background:#0b0d10;color:var(--ink);overflow:hidden}
+body{margin:0;font-family:var(--sans);font-size:13px}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#fb{position:fixed;inset:0;display:grid;place-items:center;color:var(--mute)}
+.glass{background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line)}
+.eyebrow{font:600 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+p{margin:0 0 8px;line-height:1.45;color:#d6d0c4}
+p.mini{font-size:11.5px;color:var(--mute);margin:6px 0 0}
+b{font-weight:700}
+button,select{font:600 12.5px var(--sans);color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:999px;padding:8px 13px;cursor:pointer}
+button:hover{background:rgba(255,255,255,.16)}
+button.on{background:#e9e4d8;color:#15181b;border-color:#e9e4d8}
+button.pri{background:var(--acc);color:#1b1406;border-color:var(--acc)}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+select{border-radius:10px;width:100%;background:#191d22;padding:8px 10px}
+
+/* barra superior */
+#bar{position:fixed;z-index:6;top:calc(var(--sat) + 8px);left:calc(var(--sal) + 8px);right:calc(var(--sar) + 8px);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
+#bar>*{pointer-events:auto}
+#tabs{display:flex;gap:2px;border-radius:999px;padding:3px}
+#tabs button{border:0;background:transparent;padding:8px 14px;white-space:nowrap}
+#tabs button.on{background:#e9e4d8;color:#15181b}
+#tools{display:flex;gap:6px}
+.tl{display:flex;align-items:center;gap:7px;height:38px;padding:0 13px;border-radius:999px}
+.tl svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tl .i-b{display:none}
+body.paused #bPause .i-a{display:none}body.paused #bPause .i-b{display:block}
+body.clean #bClean .i-a{display:none}body.clean #bClean .i-b{display:block}
+body.paused #bPause,body.clean #bClean{background:var(--acc);color:#1b1406;border-color:var(--acc)}
+.pop{position:fixed;z-index:8;width:220px;padding:10px;border-radius:12px;display:flex;flex-direction:column;gap:8px;background:rgba(20,24,28,.96);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.5);top:calc(var(--sat) + 54px);right:calc(var(--sar) + 8px)}
+.row{display:flex;gap:6px;flex-wrap:wrap}.row>button{flex:1 1 auto}
+.row.two>button{flex:1 1 40%}
+#toast{position:fixed;z-index:9;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 56px);background:rgba(20,24,28,.94);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:11.5px var(--mono);color:#e0dbcf;max-width:calc(100% - 24px);text-align:center;pointer-events:none}
+
+/* painel de informações */
+.card{position:fixed;z-index:3;left:calc(var(--sal) + 8px);top:calc(var(--sat) + 56px);width:min(290px,34vw);min-width:250px;max-height:calc(100% - 68px - var(--sat) - var(--sab));overflow:auto;border-radius:12px;padding:10px 12px}
+.card summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card summary::-webkit-details-marker{display:none}
+.card summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);margin:-4px 4px 0 0;flex:none;transition:transform .2s}
+.card[open] summary::after{transform:rotate(-135deg);margin:4px 4px 0 0}
+.card h1{margin:2px 0 0;font-weight:900;font-size:20px;color:var(--acc);letter-spacing:-.01em;line-height:1.15}
+.card .body{margin-top:8px}
+.note{background:rgba(0,0,0,.35);border-radius:8px;padding:8px 10px;line-height:1.45;min-height:3.2em;margin-top:8px}
+.note b{color:var(--acc)}
+.leg{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:11px;color:var(--mute)}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid rgba(255,255,255,.3)}
+table{width:100%;border-collapse:collapse;font:12px var(--mono);margin:6px 0}
+td,th{padding:3px 4px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:400;color:var(--mute);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.obsRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0}
+#obs{width:112px;height:112px;flex:none;border-radius:50%;background:rgba(0,0,0,.35)}
+.obsRow table{flex:1 1 120px;margin:0}
+.formula{font:12px/1.5 var(--mono);background:rgba(0,0,0,.35);border-radius:8px;padding:7px 10px;margin-top:6px;white-space:normal;overflow-wrap:anywhere;color:#e9e4d8}
+
+/* painel de controles */
+#dock{position:fixed;z-index:4;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 56px);width:min(256px,34vw);min-width:236px;max-height:calc(100% - 68px - var(--sat) - var(--sab));border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+#dockHead{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;cursor:pointer;font:700 13px var(--sans);color:var(--ink)}
+#dockHead:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+#dockHead svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+#dock.min #dockHead svg{transform:rotate(180deg)}
+#dockBody{padding:0 12px 12px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+#dock.min #dockBody{display:none}
+#dockBody section{display:flex;flex-direction:column;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip.on{background:var(--acc);color:#1b1406;border-color:var(--acc)}
+.sl{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+.sl label{font-size:12px;color:#cfc9bd}
+.sl output{font:600 12px var(--mono);font-variant-numeric:tabular-nums}
+.sl input{grid-column:1/-1;width:100%;accent-color:var(--acc);margin:2px 0}
+
+/* joystick */
+#joy{position:fixed;left:calc(var(--sal) + 16px);bottom:calc(var(--sab) + 16px);width:112px;height:112px;border-radius:50%;background:rgba(16,20,24,.55);border:2px solid rgba(255,255,255,.18);z-index:5;touch-action:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(240,194,74,.85);box-shadow:0 2px 10px rgba(0,0,0,.4);pointer-events:none}
+#ud{position:fixed;left:calc(var(--sal) + 142px);bottom:calc(var(--sab) + 16px);display:flex;flex-direction:column;gap:10px;z-index:5}
+#ud button{width:50px;height:50px;border-radius:50%;font-size:18px;padding:0;background:rgba(16,20,24,.6);touch-action:none}
+#ud button:active{background:rgba(240,194,74,.8);color:#1b1406}
+
+/* vertical (retrato) */
+@media (orientation:portrait){
+  #tabs{flex:1}#tabs button{flex:1;padding:9px 4px;font-size:12px}
+  #tabs .lg{display:none}
+  #tools{position:fixed;top:calc(var(--sat) + 58px);right:calc(var(--sar) + 8px);flex-direction:column;z-index:6}
+  .tl{width:40px;height:40px;padding:0;justify-content:center}.tl span{display:none}
+  .pop{top:calc(var(--sat) + 104px);right:calc(var(--sar) + 56px)}
+  .card{left:calc(var(--sal) + 8px);right:calc(var(--sar) + 56px);width:auto;min-width:0;top:calc(var(--sat) + 58px);max-height:36%}
+  #dock{left:calc(var(--sal) + 8px);right:calc(var(--sar) + 8px);top:auto;bottom:calc(var(--sab) + 8px);width:auto;min-width:0;max-height:44%}
+  body.free #joy{bottom:calc(var(--sab) + 64px)}
+  body.free #ud{left:auto;right:calc(var(--sar) + 16px);bottom:calc(var(--sab) + 64px);flex-direction:row}
+}
+/* horizontal baixo (celular deitado) */
+@media (orientation:landscape){.card:not([open]){width:fit-content;min-width:0;max-width:calc(100% - 300px)}}
+@media (orientation:landscape) and (max-height:520px){
+  #bar{top:calc(var(--sat) + 6px)}
+  #tabs button{padding:6px 11px;font-size:12px}#tabs .lg{display:none}
+  .tl{height:34px;padding:0 11px;font-size:12px}
+  .card,#dock{top:calc(var(--sat) + 46px);max-height:calc(100% - 54px - var(--sat) - var(--sab))}
+  .pop{top:calc(var(--sat) + 44px)}
+  .card{padding:8px 10px;width:min(270px,36vw)}.card h1{font-size:17px}
+  #dock{width:min(240px,34vw);min-width:220px}
+  #toast{top:calc(var(--sat) + 48px)}
+}
+body.clean #tabs,body.clean .card{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="fb">Carregando a bancada…</div>
+<canvas id="c"></canvas>
+
+<div id="bar">
+  <nav id="tabs" class="glass" role="tablist" aria-label="Experimentos">
+    <button data-m="opt" class="on" role="tab" aria-selected="true"><span class="lg">Isomeria </span>óptica</button>
+    <button data-m="plana" role="tab" aria-selected="false"><span class="lg">Isomeria </span>plana</button>
+    <button data-m="pol" role="tab" aria-selected="false">Polarímetro</button>
+  </nav>
+  <div id="tools">
+    <button class="tl glass" id="bPause" aria-label="Pausar animação" title="Pausar (tecla P)">
+      <svg class="i-a" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg><svg class="i-b" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg><span id="tPause">Pausar</span></button>
+    <button class="tl glass" id="bCam" aria-label="Câmera" aria-expanded="false" title="Câmera">
+      <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Câmera</span></button>
+    <button class="tl glass" id="bClean" aria-label="Ocultar painéis" title="Ocultar painéis (tecla H)">
+      <svg class="i-a" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="i-b" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 6.1A9.7 9.7 0 0112 5c6 0 10 7 10 7a17 17 0 01-3.2 4M6.5 6.8C3.8 8.6 2 12 2 12s4 7 10 7c1.6 0 3-.4 4.3-1"/></svg><span id="tClean">Ocultar</span></button>
+  </div>
+</div>
+
+<div id="camPop" class="pop" hidden>
+  <div class="eyebrow">Câmera</div>
+  <div class="row"><button id="cOrb" class="on" aria-pressed="true">Órbita</button><button id="cFree" aria-pressed="false">Livre</button></div>
+  <p class="mini" id="camHint" style="margin:0"></p>
+  <div class="eyebrow">Ir para</div>
+  <div class="row two" id="focusRow"></div>
+</div>
+<div id="toast" hidden></div>
+
+<details class="card glass" id="info" data-for="opt" open>
+  <summary><div><div class="eyebrow">Isomeria óptica · C₄H₁₀O</div><h1>BUTAN-2-OL</h1></div></summary>
+  <div class="body">
+    <p>Duas maquetes com os mesmos átomos e as mesmas ligações. Uma é a imagem da outra no espelho. O carbono do meio (C*) tem <b>quatro grupos diferentes</b>: OH, H, CH₃ e CH₂CH₃.</p>
+    <table><thead><tr><th></th><th>(R)</th><th>(S)</th></tr></thead><tbody>
+      <tr><td>Fórmula</td><td>C₄H₁₀O</td><td>C₄H₁₀O</td></tr>
+      <tr><td>Ebulição</td><td>≈ 100 °C</td><td>≈ 100 °C</td></tr>
+      <tr><td>Luz polarizada</td><td>gira à esquerda (−)</td><td>gira à direita (+)</td></tr>
+    </tbody></table>
+    <div class="note" id="note"></div>
+    <div class="leg"><span><i style="background:#2b2b2b"></i>carbono</span><span><i style="background:#f2f2f2"></i>hidrogênio</span><span><i style="background:#e0302a"></i>oxigênio</span><span><i style="background:#f0c24a"></i>C quiral</span></div>
+    <p class="mini">Veja na aba <b>Polarímetro</b> como cada uma gira a luz.</p>
+  </div>
+</details>
+
+<details class="card glass" id="info2" data-for="plana" hidden>
+  <summary><div><div class="eyebrow" id="pEy">Isomeria plana</div><h1 id="pTi">Cadeia</h1></div></summary>
+  <div class="body">
+    <p id="pDef"></p>
+    <table><thead><tr><th></th><th id="pNA"></th><th id="pNB"></th></tr></thead><tbody id="pTb"></tbody></table>
+    <div class="note" id="note2"></div>
+    <div class="leg"><span><i style="background:#2b2b2b"></i>carbono</span><span><i style="background:#f2f2f2"></i>hidrogênio</span><span><i style="background:#e0302a"></i>oxigênio</span><span><i style="background:#f0c24a"></i>o que muda</span></div>
+  </div>
+</details>
+
+<details class="card glass" id="info3" data-for="pol" hidden>
+  <summary><div><div class="eyebrow">Luz polarizada</div><h1>POLARÍMETRO</h1></div></summary>
+  <div class="body">
+    <p>O <b>polarizador</b> deixa a luz vibrar num só plano. Uma amostra com molécula quiral <b>gira</b> esse plano. O <b>analisador</b> mede o quanto.</p>
+    <div class="obsRow">
+      <canvas id="obs" width="224" height="224" aria-label="Vista do observador"></canvas>
+      <table><tbody>
+        <tr><td>Rotação α</td><td id="tAlpha"></td></tr>
+        <tr><td>Sentido</td><td id="tSense"></td></tr>
+        <tr><td>Analisador</td><td id="tAna"></td></tr>
+        <tr><td>Luz medida</td><td id="tI"></td></tr>
+      </tbody></table>
+    </div>
+    <div class="formula" id="polCalc"></div>
+    <div class="note" id="note3"></div>
+    <div class="leg"><span><i style="background:#ffd84a"></i>plano da luz</span><span><i style="background:#f08a4f"></i>analisador</span><span><i style="background:#cfd8e0"></i>visto pelo observador</span></div>
+    <p class="mini">Horário (visto de frente para a lâmpada) = dextrógiro (+). Anti-horário = levógiro (−). R e S descrevem a geometria da molécula; + e − dizem para onde a luz gira. Uma letra não determina o sinal.</p>
+  </div>
+</details>
+
+<aside id="dock" class="glass" aria-label="Controles do experimento">
+  <button id="dockHead" aria-expanded="true"><span>Controles</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div id="dockBody">
+    <section data-for="opt">
+      <button class="pri" id="bTry">Tentar sobrepor</button>
+      <div class="grid"><button id="bBack">Separar</button><button id="bSync" class="on">Espelhar giro</button><button id="bStar" class="on">Destacar C*</button></div>
+    </section>
+    <section data-for="plana" hidden>
+      <div class="eyebrow">Tipo de isomeria</div>
+      <div class="chips" id="mList"></div>
+      <div class="eyebrow">Maquetes</div>
+      <div class="grid"><button id="pSync" class="on">Girar juntas</button><button id="pSpin">Girar sozinhas</button><button id="pHl" class="on">Destacar diferença</button></div>
+    </section>
+    <section data-for="pol" hidden>
+      <div class="eyebrow">Amostra no tubo</div>
+      <select id="sSel" aria-label="Amostra">
+        <option value="S">(S)-butan-2-ol</option><option value="R">(R)-butan-2-ol</option><option value="rac">Mistura racêmica (R + S)</option><option value="agua">Água (sem molécula quiral)</option>
+      </select>
+      <div class="sl"><label for="sC">Concentração</label><output id="oC"></output><input type="range" id="sC" min="0.1" max="0.8" step="0.05" value="0.8"></div>
+      <div class="sl"><label for="sL">Comprimento do tubo</label><output id="oL"></output><input type="range" id="sL" min="1" max="4" step="0.5" value="3"></div>
+      <div class="sl"><label for="sA">Ângulo do analisador</label><output id="oA"></output><input type="range" id="sA" min="-90" max="90" step="0.5" value="0"></div>
+      <div class="grid"><button class="pri" id="bAuto">Ajustar analisador</button><button id="bWave" class="on">Mostrar ondas</button></div>
+    </section>
+  </div>
+</aside>
+
+<div id="joy" hidden aria-label="Joystick de movimento"><div id="knob"></div></div>
+<div id="ud" hidden><button id="bUp" aria-label="Subir">▲</button><button id="bDn" aria-label="Descer">▼</button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+(function(){
+if(!window.THREE){document.getElementById("fb").textContent="Não foi possível carregar o motor 3D. Recarregue a página.";return}
+document.getElementById("fb").hidden=true;
+const $=id=>document.getElementById(id),V=(x,y,z)=>new THREE.Vector3(x,y,z),RAD_=Math.PI/180;
+const fmt=(v,d=1)=>v.toFixed(d).replace(".",","),sgn=(v,d=1)=>(v>0.0499?"+":v<-0.0499?"−":"")+fmt(Math.abs(v),d);
+let MODE="opt",paused=false;
+var CAM={mode:"orb",yaw:0,pitch:0,jx:0,jy:0,vert:0,keys:{},look:null,tween:null};
+
+/* ---------- cena ---------- */
+const canvas=$("c"),renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.8;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0e1013);scene.fog=new THREE.Fog(0x0e1013,5,12);
+const camera=new THREE.PerspectiveCamera(40,1,0.01,40);camera.position.set(0.95,1.55,1.7);
+const controls=new THREE.OrbitControls(camera,canvas);controls.target.set(-0.2,1.22,-0.05);controls.enableDamping=true;controls.minDistance=0.12;controls.maxDistance=6;controls.maxPolarAngle=Math.PI;controls.minPolarAngle=0;controls.screenSpacePanning=true;controls.zoomSpeed=1.2;
+if(THREE.RoomEnvironment){const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new THREE.RoomEnvironment(),0.04).texture}
+scene.add(new THREE.HemisphereLight(0xcfe0ff,0x2a1e14,0.35));
+const spot=new THREE.SpotLight(0xfff0dc,1.3,10,0.6,0.5,1);spot.position.set(0.8,3.8,1.8);spot.target.position.set(0,1,0);spot.castShadow=true;spot.shadow.mapSize.set(1024,1024);spot.shadow.bias=-0.0004;scene.add(spot,spot.target);
+function tex(w,h,draw,rep){const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep,rep)}return t}
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.MeshStandardMaterial({roughness:0.4,map:tex(256,256,(x,w,h)=>{x.fillStyle="#bdb4a6";x.fillRect(0,0,w,h);x.strokeStyle="#8d8578";x.lineWidth=3;x.strokeRect(0,0,128,128);x.strokeRect(128,128,128,128);x.strokeRect(128,0,128,128);x.strokeRect(0,128,128,128)},7)}));
+floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(14,5),new THREE.MeshStandardMaterial({color:0x1d1b1a,roughness:0.95}));wall.position.set(0,2.5,-2.6);scene.add(wall);
+function makeBoard(title,lines){return new THREE.Mesh(new THREE.PlaneGeometry(1.6,0.8),new THREE.MeshBasicMaterial({map:tex(800,400,(x,w,h)=>{x.fillStyle="#1f3a2e";x.fillRect(0,0,w,h);x.strokeStyle="#7a5a36";x.lineWidth=18;x.strokeRect(0,0,w,h);
+  x.fillStyle="#e8efe6";x.font="600 40px Chivo,sans-serif";x.fillText(title,40,80);x.font="30px JetBrains Mono,monospace";lines.forEach((l,i)=>x.fillText(l,40,150+i*52))})}))}
+const board=makeBoard("Isômeros ópticos",["C* = carbono com 4 grupos","diferentes","imagens no espelho que","não se sobrepõem = enantiômeros"]);
+const board2=makeBoard("Isomeria plana",["mesma fórmula molecular","fórmulas estruturais diferentes","cadeia · posição · função","metameria · tautomeria"]);
+const board3=makeBoard("Luz polarizada",["α = [α] · l · c","(+) dextrógiro: gira à direita","(−) levógiro: gira à esquerda","racemato: α = 0"]);
+[board,board2,board3].forEach(b=>{b.position.set(0,2.1,-2.58);scene.add(b)});board2.visible=board3.visible=false;
+const metal=new THREE.MeshStandardMaterial({color:0x4f575f,roughness:0.5,metalness:0.6});
+const darkM=new THREE.MeshStandardMaterial({color:0x2a2f35,roughness:0.5,metalness:0.5});
+const bench=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.86,1.1),metal);bench.position.set(0,0.43,0);bench.castShadow=bench.receiveShadow=true;scene.add(bench);
+const top=new THREE.Mesh(new THREE.BoxGeometry(2.7,0.05,1.2),new THREE.MeshStandardMaterial({color:0x2b2f34,roughness:0.35,metalness:0.2}));top.position.set(0,0.885,0);top.receiveShadow=true;scene.add(top);
+const kit=new THREE.Group();scene.add(kit);
+const kitBox=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.05,0.26),new THREE.MeshStandardMaterial({color:0x2d5a8a,roughness:0.6}));kitBox.position.set(-1.05,0.935,0.3);kitBox.rotation.y=0.3;kitBox.castShadow=true;kit.add(kitBox);
+[[0x2b2b2b,-1.14,.26],[0xf2f2f2,-1.02,.33],[0xe0302a,-0.95,.25],[0xf2f2f2,-1.08,.38],[0x2b2b2b,-0.99,.2]].forEach(([c,x,z])=>{const b=new THREE.Mesh(new THREE.SphereGeometry(0.025,16,12),new THREE.MeshStandardMaterial({color:c,roughness:0.35}));b.position.set(x,0.985,z);kit.add(b)});
+function label(txt,col,w=0.5){const t=tex(512,100,(x,W,H)=>{x.fillStyle="rgba(10,12,15,.8)";x.fillRect(0,10,W,H-20);x.fillStyle=col;x.font="900 44px Chivo,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(txt,W/2,H/2+2)});
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false}));s.scale.set(w,w/5,1);s.renderOrder=9;return s}
+
+/* ---------- espelho ---------- */
+const mirrorG=new THREE.Group();mirrorG.position.set(0,0.91,-0.05);scene.add(mirrorG);
+const glass=new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.72),new THREE.MeshPhysicalMaterial({color:0xcfe3f0,metalness:1,roughness:0.05,transparent:true,opacity:0.42,side:THREE.DoubleSide,depthWrite:false}));
+glass.rotation.y=Math.PI/2;glass.position.y=0.4;mirrorG.add(glass);
+const fr=new THREE.MeshStandardMaterial({color:0x8a7550,roughness:0.4,metalness:0.5});
+[[0.02,0.74,0.02,0,0.4,0.46],[0.02,0.74,0.02,0,0.4,-0.46],[0.02,0.02,0.94,0,0.77,0]].forEach(([a,b,c,x,y,z])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),fr);m.position.set(x,y,z);mirrorG.add(m)});
+const mfoot=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.03,0.96),fr);mfoot.position.y=0.015;mirrorG.add(mfoot);
+
+/* ---------- molécula (butan-2-ol) ---------- */
+const COL={C:0x2b2b2b,H:0xf2f2f2,O:0xe0302a},RAD={C:0.34,H:0.24,O:0.32};
+const cb=-1/3,sb=Math.sqrt(8/9);
+function sp3From(back,phi0){let u=Math.abs(back.y)<0.9?V(0,1,0):V(1,0,0);u=u.clone().sub(back.clone().multiplyScalar(u.dot(back))).normalize();const v=back.clone().cross(u);
+  return [0,1,2].map(i=>{const p=phi0+i*2*Math.PI/3;return back.clone().multiplyScalar(cb).add(u.clone().multiplyScalar(sb*Math.cos(p))).add(v.clone().multiplyScalar(sb*Math.sin(p))).normalize()})}
+const T=[V(1,1,1),V(1,-1,-1),V(-1,1,-1),V(-1,-1,1)].map(v=>v.normalize());
+const q=new THREE.Quaternion().setFromUnitVectors(T[0],V(0.15,0.95,0.3).normalize());T.forEach(v=>v.applyQuaternion(q));
+function buildAtoms(){
+  const A=[],Bd=[];const add=(el,p,grp)=>{A.push({el,p,grp});return A.length-1};const bond=(a,b)=>Bd.push([a,b]);
+  const cs=add("C",V(0,0,0),"star");
+  const o=add("O",T[0].clone().multiplyScalar(1.43),"OH");bond(cs,o);
+  const hO=sp3From(T[0].clone().negate(),0.4)[0];bond(o,add("H",A[o].p.clone().add(hO.multiplyScalar(0.96)),"OH"));
+  bond(cs,add("H",T[1].clone().multiplyScalar(1.09),"H"));
+  const m=add("C",T[2].clone().multiplyScalar(1.53),"CH3");bond(cs,m);
+  sp3From(T[2].clone().negate(),0.3).forEach(d=>bond(m,add("H",A[m].p.clone().add(d.multiplyScalar(1.09)),"CH3")));
+  const e1=add("C",T[3].clone().multiplyScalar(1.53),"Et");bond(cs,e1);
+  const d1=sp3From(T[3].clone().negate(),1.1);const e2=add("C",A[e1].p.clone().add(d1[0].clone().multiplyScalar(1.53)),"Et");bond(e1,e2);
+  bond(e1,add("H",A[e1].p.clone().add(d1[1].clone().multiplyScalar(1.09)),"Et"));bond(e1,add("H",A[e1].p.clone().add(d1[2].clone().multiplyScalar(1.09)),"Et"));
+  sp3From(d1[0].clone().negate(),0.5).forEach(d=>bond(e2,add("H",A[e2].p.clone().add(d.multiplyScalar(1.09)),"Et")));
+  return {A,Bd};
+}
+const MOL=buildAtoms(),SC=0.105;
+const stickMat=new THREE.MeshStandardMaterial({color:0xb8bcc2,roughness:0.3,metalness:0.6});
+function makeMol(mirror){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);inner.scale.setScalar(SC);
+  const P=MOL.A.map(a=>mirror?V(-a.p.x,a.p.y,a.p.z):a.p.clone());const meshes=[];
+  MOL.A.forEach((a,i)=>{const star=a.grp==="star";const m=new THREE.Mesh(new THREE.SphereGeometry(RAD[a.el],32,20),new THREE.MeshStandardMaterial({color:COL[a.el],roughness:a.el==="C"?0.45:0.3,metalness:0.05}));
+    m.position.copy(P[i]);m.castShadow=true;m.userData.grp=a.grp;inner.add(m);meshes.push(m);if(star)g.userData.star=m});
+  MOL.Bd.forEach(([i,j])=>{const a=P[i],b=P[j],len=a.distanceTo(b);const s=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,len,14),stickMat);
+    s.position.copy(a).add(b).multiplyScalar(0.5);s.quaternion.setFromUnitVectors(V(0,1,0),b.clone().sub(a).normalize());s.castShadow=true;inner.add(s)});
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(0.52,32,20),new THREE.MeshBasicMaterial({color:0xf0c24a,transparent:true,opacity:0.22,depthWrite:false}));inner.add(halo);g.userData.halo=halo;
+  g.userData.meshes=meshes;g.userData.P=P;return g;
+}
+function cip(mirror){const f=v=>mirror?V(-v.x,v.y,v.z):v;const v1=f(T[0]),v2=f(T[3]),v3=f(T[2]);return v1.clone().cross(v2).dot(v3)<0?"R":"S"}
+const cfgL=cip(false),cfgR=cip(true);
+function base(x){const g=new THREE.Group();g.position.set(x,0.91,-0.05);scene.add(g);
+  const d=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.22,0.03,48),new THREE.MeshStandardMaterial({color:0x1b1e22,roughness:0.3,metalness:0.6}));d.position.y=0.015;d.receiveShadow=true;g.add(d);
+  const r=new THREE.Mesh(new THREE.TorusGeometry(0.205,0.004,8,64),new THREE.MeshBasicMaterial({color:0xf0c24a}));r.rotation.x=Math.PI/2;r.position.y=0.031;g.add(r);
+  const p=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.18,12),stickMat);p.position.y=0.12;g.add(p);return g}
+const bases=[base(-0.55),base(0.55)];
+const molL=makeMol(false),molR=makeMol(true);
+const HOME_L=V(-0.55,1.3,-0.05),HOME_R=V(0.55,1.3,-0.05);
+molL.position.copy(HOME_L);molR.position.copy(HOME_R);scene.add(molL,molR);
+const labL=label(`(${cfgL})-butan-2-ol`,"#f0c24a"),labR=label(`(${cfgR})-butan-2-ol`,"#9fd0ea");labL.position.set(-0.55,1.62,-0.05);labR.position.set(0.55,1.62,-0.05);scene.add(labL,labR);
+const mirLab=label("espelho","#bfd6e6",0.3);mirLab.position.set(0,1.75,-0.05);scene.add(mirLab);
+
+/* ---------- girar maquetes ---------- */
+let sync=true,drag=null,lx=0,ly=0,pL=null,pR=null,pLabs=[],pSync=true,pSpin=false,pHl=true;
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function pick(e){const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mouse,camera);
+  const L=MODE==="opt"?[molL,molR]:MODE==="plana"?[pL,pR].filter(Boolean):[];if(!L.length)return null;
+  const h=ray.intersectObjects(L.flatMap(m=>m.userData.meshes));if(!h.length)return null;return L.find(m=>m.userData.meshes.includes(h[0].object))}
+canvas.addEventListener("pointerdown",e=>{closePop();if(CAM.mode==="free")return;if(anim&&MODE==="opt")return;const m=pick(e);if(!m)return;drag=m;lx=e.clientX;ly=e.clientY;controls.enabled=false;canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener("pointermove",e=>{if(CAM.mode==="free")return;if(!drag){canvas.style.cursor=pick(e)?"grab":"default";return}
+  const dx=(e.clientX-lx)*0.01,dy=(e.clientY-ly)*0.01;lx=e.clientX;ly=e.clientY;
+  rot(drag,dx,dy);
+  if(MODE==="opt"){if(sync&&!overlap)rot(drag===molL?molR:molL,-dx,dy);if(!overlap)setNote("free")}
+  else if(pSync)rot(drag===pL?pR:pL,dx,dy)});
+function rot(m,dx,dy){const qy=new THREE.Quaternion().setFromAxisAngle(V(0,1,0),dx),qx=new THREE.Quaternion().setFromAxisAngle(V(1,0,0),dy);m.quaternion.premultiply(qy).premultiply(qx)}
+const end=()=>{drag=null;if(CAM.mode!=="free")controls.enabled=true};canvas.addEventListener("pointerup",end);canvas.addEventListener("pointercancel",end);
+
+/* ---------- tentar sobrepor ---------- */
+const GR={OH:0,H:1,CH3:2,Et:3},NAMES={OH:"OH",H:"H",CH3:"CH₃",Et:"etil"};
+const PAIRS=[["OH","CH3"],["OH","H"],["CH3","Et"]];let attempt=0,anim=null,overlap=false;
+function frame(a,b){const x=a.clone().normalize(),z=a.clone().cross(b).normalize(),y=z.clone().cross(x);return new THREE.Matrix4().makeBasis(x,y,z)}
+function tryOverlap(){
+  const [g1,g2]=PAIRS[attempt%3];attempt++;
+  const m=v=>V(-v.x,v.y,v.z);
+  const src=frame(m(T[GR[g1]]),m(T[GR[g2]])),dst=frame(T[GR[g1]],T[GR[g2]]);
+  const R=dst.clone().multiply(src.clone().transpose());
+  const qR=new THREE.Quaternion().setFromRotationMatrix(R);
+  const qTarget=molL.quaternion.clone().multiply(qR);
+  const bad=Object.keys(GR).filter(k=>k!==g1&&k!==g2);
+  anim={t:0,p0:molR.position.clone(),q0:molR.quaternion.clone(),p1:HOME_L.clone(),q1:qTarget,g1,g2,bad,back:false};
+  resetTint();overlap=true;setNote("moving")}
+function separate(){if(!overlap)return;anim={t:0,p0:molR.position.clone(),q0:molR.quaternion.clone(),p1:HOME_R.clone(),q1:molR.quaternion.clone(),back:true};resetTint()}
+function resetTint(){[molL,molR].forEach(M=>M.userData.meshes.forEach(s=>{s.material.emissive&&s.material.emissive.setHex(0);s.material.transparent=false;s.material.opacity=1}))}
+function tint(){const {g1,g2,bad}=anim;
+  molR.userData.meshes.forEach(s=>{s.material.transparent=true;s.material.opacity=0.55});
+  [molL,molR].forEach(M=>M.userData.meshes.forEach(s=>{const g=s.userData.grp;if(g===g1||g===g2)s.material.emissive.setHex(0x1f6a2a);else if(bad.includes(g))s.material.emissive.setHex(0x8a1010)}))}
+let lastNote="";
+function setNote(k){if(k===lastNote&&k!=="result")return;lastNote=k;let n;
+  if(k==="free")n="Arraste uma maquete para girá-la. Com <b>Espelhar giro</b> ligado, a outra gira como imagem no espelho. Compare os quatro grupos ligados ao C*.";
+  else if(k==="moving")n="Levando a maquete da direita até a da esquerda…";
+  else if(k==="result"){const {g1,g2,bad}=anim;n=`Tentativa ${attempt}: encaixei <b style="color:#6fd07a">${NAMES[g1]}</b> e <b style="color:#6fd07a">${NAMES[g2]}</b>, mas <b style="color:#ff6a5a">${NAMES[bad[0]]}</b> e <b style="color:#ff6a5a">${NAMES[bad[1]]}</b> ficaram trocados. ${attempt>=3?"Qualquer giro deixa dois grupos trocados: as moléculas <b>não se sobrepõem</b>. São <b>enantiômeros</b>, como a mão esquerda e a direita.":"Toque em <b>Tentar sobrepor</b> de novo para outra tentativa."}`}
+  else n=`Toque em <b>Tentar sobrepor</b>: vou girar a molécula da direita de todos os jeitos para ver se ela encaixa na da esquerda.`;
+  $("note").innerHTML=n}
+setNote("start");
+$("bTry").onclick=()=>{if(!anim)tryOverlap()};
+$("bBack").onclick=()=>{if(!anim)separate()};
+$("bSync").onclick=e=>{sync=!sync;e.currentTarget.classList.toggle("on",sync)};
+let star=true;$("bStar").onclick=e=>{star=!star;e.currentTarget.classList.toggle("on",star);[molL,molR].forEach(m=>{m.userData.halo.visible=star;m.userData.star.material.color.setHex(star?0xf0c24a:COL.C)})};
+[molL,molR].forEach(m=>m.userData.star.material.color.setHex(0xf0c24a));
+
+/* ---------- isomeria plana ---------- */
+const BL={"C-C":1.53,"C=C":1.34,"C-O":1.43,"C=O":1.22,"C-H":1.09,"H-O":0.96},VAL={C:4,O:2};
+const bl=(a,b,o)=>BL[[a,b].sort().join(o===2?"=":"-")]||1.4;
+function sp3Ref(back,ref){let u=ref.clone().sub(back.clone().multiplyScalar(ref.dot(back)));if(u.length()<1e-3)u=Math.abs(back.y)<0.9?V(0,1,0):V(1,0,0),u.sub(back.clone().multiplyScalar(u.dot(back)));u.normalize();const v=back.clone().cross(u);
+  return [0,1,2].map(i=>{const p=i*2*Math.PI/3;return back.clone().multiplyScalar(cb).add(u.clone().multiplyScalar(sb*Math.cos(p))).add(v.clone().multiplyScalar(sb*Math.sin(p))).normalize()})}
+function buildSpec(spec){
+  const A=spec.map(s=>({el:s[0],par:s.length>1?s[1]:-1,ord:s[2]||1,kids:[]}));
+  A.forEach((a,i)=>{if(a.par>=0)A[a.par].kids.push(i)});
+  const n0=A.length;
+  for(let i=0;i<n0;i++){const a=A[i];let used=(a.par>=0?a.ord:0)+a.kids.reduce((s,k)=>s+A[k].ord,0);
+    for(let h=used;h<VAL[a.el];h++){A.push({el:"H",par:i,ord:1,kids:[]});a.kids.push(A.length-1)}}
+  const isSp2=i=>A[i].ord===2||A[i].kids.some(k=>A[k].ord===2);
+  const Z=V(0,0,1);const rotZ=(v,a)=>v.clone().applyAxisAngle(Z,a);
+  function place(i){const a=A[i];let dirs;const back=a.back;
+    if(isSp2(i))dirs=[rotZ(back,2*Math.PI/3),rotZ(back,-2*Math.PI/3)];
+    else dirs=sp3Ref(back,a.ref);
+    if(a.par<0)dirs.push(back.clone());
+    const heavy=a.kids.filter(k=>A[k].el!=="H"),hs=a.kids.filter(k=>A[k].el==="H");
+    const want=a.ref.clone();dirs.sort((p,q)=>q.dot(want)-p.dot(want));
+    [...heavy,...hs].forEach((k,j)=>{const c=A[k],d=dirs[j].clone().normalize();c.p=a.p.clone().add(d.clone().multiplyScalar(bl(a.el,c.el,c.ord)));
+      c.back=d.clone().negate();c.ref=back.clone().negate();place(k)})}
+  A[0].p=V(0,0,0);A[0].back=V(-0.816,0.577,0).normalize();A[0].ref=V(1,0,0);place(0);
+  const hv=A.filter(a=>a.el!=="H"),cen=hv.reduce((s,a)=>s.add(a.p),V(0,0,0)).multiplyScalar(1/hv.length);A.forEach(a=>a.p.sub(cen));
+  return A}
+const dblMat=new THREE.MeshStandardMaterial({color:0xd8a840,roughness:0.3,metalness:0.5});
+function makePlanar(spec,hl){
+  const A=buildSpec(spec),g=new THREE.Group(),inner=new THREE.Group();g.add(inner);inner.scale.setScalar(0.09);const meshes=[],halos=[];
+  A.forEach((a,i)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(RAD[a.el],32,20),new THREE.MeshStandardMaterial({color:COL[a.el],roughness:a.el==="C"?0.45:0.3}));m.position.copy(a.p);m.castShadow=true;inner.add(m);meshes.push(m);
+    if(hl.includes(i)){const h=new THREE.Mesh(new THREE.SphereGeometry(RAD[a.el]+0.2,28,18),new THREE.MeshBasicMaterial({color:0xf0c24a,transparent:true,opacity:0.3,depthWrite:false}));h.position.copy(a.p);inner.add(h);halos.push(h)}
+    if(a.par>=0){const b=A[a.par].p,len=a.p.distanceTo(b),dir=a.p.clone().sub(b).normalize();
+      let perp=dir.clone().cross(V(0,0,1));if(perp.length()<0.1)perp=dir.clone().cross(V(0,1,0));perp.normalize().multiplyScalar(0.13);
+      const offs=a.ord===2?[perp,perp.clone().negate()]:[V(0,0,0)];
+      offs.forEach(o=>{const s=new THREE.Mesh(new THREE.CylinderGeometry(a.ord===2?0.05:0.07,a.ord===2?0.05:0.07,len,14),a.ord===2?dblMat:stickMat);
+        s.position.copy(a.p).add(b).multiplyScalar(0.5).add(o);s.quaternion.setFromUnitVectors(V(0,1,0),dir);s.castShadow=true;inner.add(s)})}});
+  g.userData.meshes=meshes;g.userData.halos=halos;return g}
+const PLANA=[
+ {t:"Cadeia",f:"C₄H₁₀",def:"Mesma fórmula e mesma função, mas <b>cadeias diferentes</b>: uma é normal (reta) e a outra é ramificada.",
+  A:{n:"butano",s:[["C"],["C",0],["C",1],["C",2]],hl:[3],fn:"alcano",pe:"−0,5 °C",x:"cadeia normal"},
+  B:{n:"metilpropano",s:[["C"],["C",0],["C",1],["C",1]],hl:[3],fn:"alcano",pe:"−12 °C",x:"cadeia ramificada"},
+  tip:"Conte os carbonos: 4 em cada. Na maquete da direita, o carbono do meio se liga a <b>três</b> outros carbonos: é o ponto da ramificação."},
+ {t:"Posição",f:"C₃H₈O",def:"Mesma cadeia e mesma função, mas o grupo funcional (ou uma ramificação ou insaturação) está em <b>outra posição</b> da cadeia.",
+  A:{n:"propan-1-ol",s:[["C"],["C",0],["C",1],["O",2]],hl:[3],fn:"álcool",pe:"97 °C",x:"OH no carbono 1"},
+  B:{n:"propan-2-ol",s:[["C"],["C",0],["C",1],["O",1]],hl:[3],fn:"álcool",pe:"82 °C",x:"OH no carbono 2"},
+  tip:"As duas são álcoois com 3 carbonos. O <b>OH</b> mudou do carbono da ponta para o carbono do meio, e isso muda o número no nome."},
+ {t:"Função",f:"C₃H₆O",def:"Mesma fórmula, mas os átomos formam <b>funções orgânicas diferentes</b>.",
+  A:{n:"propanal",s:[["C"],["C",0],["C",1],["O",2,2]],hl:[3],fn:"aldeído",pe:"48 °C",x:"C=O na ponta"},
+  B:{n:"propanona",s:[["C"],["C",0],["C",1],["O",1,2]],hl:[3],fn:"cetona",pe:"56 °C",x:"C=O no meio"},
+  tip:"Nas duas há um <b>C=O</b> (vareta dupla dourada). Na ponta da cadeia, é um aldeído. No meio, entre dois carbonos, é uma cetona: a acetona do removedor de esmalte."},
+ {t:"Metameria",f:"C₄H₁₀O",def:"Também chamada de <b>compensação</b>. Mesma função, mas o <b>heteroátomo</b> (aqui o oxigênio) muda de posição dentro da cadeia.",
+  A:{n:"metoxipropano",s:[["C"],["O",0],["C",1],["C",2],["C",3]],hl:[1],fn:"éter",pe:"39 °C",x:"1 C | O | 3 C"},
+  B:{n:"etoxietano",s:[["C"],["C",0],["O",1],["C",2],["C",3]],hl:[2],fn:"éter",pe:"35 °C",x:"2 C | O | 2 C"},
+  tip:"O oxigênio fica <b>no meio da cadeia</b> nas duas. O que muda é quantos carbonos ficam de cada lado dele: 1 e 3, ou 2 e 2."},
+ {t:"Tautomeria",f:"C₂H₄O",def:"Caso especial de isomeria de função: os dois isômeros <b>se convertem um no outro sozinhos</b> e ficam em equilíbrio dinâmico.",
+  A:{n:"etanal",s:[["C"],["C",0],["O",1,2]],hl:[2],fn:"aldeído",pe:"20 °C",x:"forma ceto (C=O)"},
+  B:{n:"etenol",s:[["C"],["C",0,2],["O",1]],hl:[2],fn:"enol",pe:"instável",x:"forma enol (C=C–OH)"},
+  tip:"Um <b>H</b> sai do carbono e vai para o oxigênio, e a ligação dupla muda de C=O para C=C. O equilíbrio fica quase todo do lado do etanal: o enol quase não aparece."}];
+function loadPlana(i){const P=PLANA[i];
+  [pL,pR,...pLabs].forEach(o=>o&&scene.remove(o));
+  pL=makePlanar(P.A.s,P.A.hl);pR=makePlanar(P.B.s,P.B.hl);pL.position.copy(HOME_L);pR.position.copy(HOME_R);scene.add(pL,pR);
+  pLabs=[label(P.A.n,"#f0c24a"),label(P.B.n,"#9fd0ea")];pLabs[0].position.set(-0.55,1.62,-0.05);pLabs[1].position.set(0.55,1.62,-0.05);
+  const eq=label(P.f+"  =  "+P.f,"#e9e4d8",0.42);eq.position.set(0,1.32,-0.05);pLabs.push(eq);scene.add(...pLabs);
+  [pL,pR].forEach(m=>m.userData.halos.forEach(h=>h.visible=pHl));
+  $("pEy").textContent="Isomeria plana · "+P.f;$("pTi").textContent=P.t.toUpperCase();$("pDef").innerHTML=P.def;$("pNA").textContent=P.A.n;$("pNB").textContent=P.B.n;
+  $("pTb").innerHTML=[["Fórmula",P.f,P.f],["Função",P.A.fn,P.B.fn],["Ebulição",P.A.pe,P.B.pe],["Diferença",P.A.x,P.B.x]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+  $("note2").innerHTML=P.tip;
+  document.querySelectorAll(".chip").forEach((b,j)=>b.classList.toggle("on",j===i))}
+$("mList").innerHTML=PLANA.map((P,i)=>`<button class="chip" data-i="${i}" title="${P.A.n} × ${P.B.n}">${P.t}</button>`).join("");
+document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>loadPlana(+b.dataset.i));
+$("pSync").onclick=e=>{pSync=!pSync;e.currentTarget.classList.toggle("on",pSync)};
+$("pSpin").onclick=e=>{pSpin=!pSpin;e.currentTarget.classList.toggle("on",pSpin)};
+$("pHl").onclick=e=>{pHl=!pHl;e.currentTarget.classList.toggle("on",pHl);[pL,pR].forEach(m=>m&&m.userData.halos.forEach(h=>h.visible=pHl))};
+
+/* ---------- polarímetro ---------- */
+const BY=1.2,XL=-1.04,XP=-0.74,XT0=-0.52,XA=0.5,XW=1.03,DM=0.17;
+const polG=new THREE.Group();polG.visible=false;scene.add(polG);
+const SAMPLES={S:{n:"(S)-butan-2-ol",sp:13.5,col:0x9fd0ea},R:{n:"(R)-butan-2-ol",sp:-13.5,col:0xf0c24a},rac:{n:"Mistura racêmica",sp:0,col:0xbfe0c0},agua:{n:"Água",sp:0,col:0xa8d4ff}};
+const POL={t:0,sample:"S",c:0.8,L:3,a:0,waves:true,auto:null,lastI:-1};
+const alphaNow=()=>SAMPLES[POL.sample].sp*POL.L*POL.c;
+function stand(x,yTop){const g=new THREE.Group();g.position.set(x,0.91,0);
+  const b=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.02,0.16),darkM);b.position.y=0.01;b.castShadow=true;g.add(b);
+  const p=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,yTop-0.91,10),stickMat);p.position.y=(yTop-0.91)/2;g.add(p);polG.add(g);return g}
+// lâmpada
+const lamp=new THREE.Group();lamp.position.set(XL,BY,0);polG.add(lamp);
+const lampBody=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.1,0.24,32),darkM);lampBody.rotation.z=Math.PI/2;lampBody.position.x=-0.12;lampBody.castShadow=true;lamp.add(lampBody);
+for(let i=0;i<4;i++){const f=new THREE.Mesh(new THREE.TorusGeometry(0.1,0.01,8,32),metal);f.rotation.y=Math.PI/2;f.position.x=-0.06-i*0.04;lamp.add(f)}
+const lampLens=new THREE.Mesh(new THREE.CircleGeometry(0.07,32),new THREE.MeshBasicMaterial({color:0xfff3b0,toneMapped:false}));lampLens.rotation.y=Math.PI/2;lampLens.position.x=0.001;lamp.add(lampLens);
+const lampLight=new THREE.PointLight(0xffe9a8,0.6,1.8);lampLight.position.set(0.06,0,0);lamp.add(lampLight);
+stand(XL-0.12,BY-0.1);
+// polarizador
+function polaroidTex(){return tex(128,128,(x,w,h)=>{x.fillStyle="rgba(70,80,100,0.34)";x.fillRect(0,0,w,h);x.strokeStyle="rgba(235,240,255,0.6)";x.lineWidth=1.5;for(let i=4;i<w;i+=8){x.beginPath();x.moveTo(i,0);x.lineTo(i,h);x.stroke()}})}
+function polDisc(){const d=new THREE.Mesh(new THREE.CircleGeometry(0.12,48),new THREE.MeshBasicMaterial({map:polaroidTex(),transparent:true,side:THREE.DoubleSide,depthWrite:false}));d.rotation.y=Math.PI/2;return d}
+function holderRing(x){const r=new THREE.Mesh(new THREE.TorusGeometry(0.135,0.012,12,48),metal);r.rotation.y=Math.PI/2;r.position.set(x,BY,0);r.castShadow=true;polG.add(r)}
+const polDiscP=polDisc();polDiscP.position.set(XP,BY,0);polG.add(polDiscP);holderRing(XP);stand(XP,BY-0.13);
+// analisador (disco gira; escala fixa)
+const anaG=new THREE.Group();anaG.position.set(XA,BY,0);polG.add(anaG);anaG.add(polDisc());
+const pointer=new THREE.Mesh(new THREE.BoxGeometry(0.004,0.06,0.006),new THREE.MeshBasicMaterial({color:0xf08a4f}));pointer.position.set(0.024,0.135,0);anaG.add(pointer);
+const scaleTex=tex(512,512,(x,w,h)=>{const cx=256,R=256;x.beginPath();x.arc(cx,cx,R*0.995,0,Math.PI*2);x.arc(cx,cx,R*0.795,0,Math.PI*2,true);x.fillStyle="#1d2127";x.fill();
+  const P=(deg,r)=>[cx+r*Math.sin(deg*RAD_),cx-r*Math.cos(deg*RAD_)];x.strokeStyle="#cfd6dc";x.fillStyle="#e7ece9";x.textAlign="center";x.textBaseline="middle";
+  for(let d=-180;d<180;d+=5){const big=d%10===0,a=P(d,R*(big?0.82:0.86)),b=P(d,R*0.97);x.lineWidth=big?3:1.5;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke()}
+  x.font="700 21px JetBrains Mono,monospace";for(let d=-90;d<=90;d+=30){const p=P(d,R*0.9);x.save();x.translate(p[0],p[1]);x.rotate(d*RAD_);x.fillText(String(d),0,0);x.restore()}
+  x.fillStyle="#f0c24a";x.beginPath();x.moveTo(cx,R*0.02);x.lineTo(cx-14,-2);x.lineTo(cx+14,-2);x.fill()});
+const scaleRing=new THREE.Mesh(new THREE.RingGeometry(0.135,0.17,64),new THREE.MeshBasicMaterial({map:scaleTex,transparent:true}));scaleRing.rotation.y=Math.PI/2;scaleRing.position.set(XA+0.013,BY,0);polG.add(scaleRing);
+holderRing(XA);stand(XA,BY-0.13);
+// tubo
+const tubeG=new THREE.Group();polG.add(tubeG);
+const tubeGlass=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1,32,1,true),new THREE.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:0.18,roughness:0.05,side:THREE.DoubleSide,depthWrite:false}));tubeGlass.rotation.z=Math.PI/2;tubeG.add(tubeGlass);
+const liquidMat=new THREE.MeshStandardMaterial({color:0x9fd0ea,transparent:true,opacity:0.55,roughness:0.2});
+const liquid=new THREE.Mesh(new THREE.CylinderGeometry(0.062,0.062,1,32),liquidMat);liquid.rotation.z=Math.PI/2;tubeG.add(liquid);
+const capL=new THREE.Mesh(new THREE.TorusGeometry(0.07,0.01,10,32),metal),capR=capL.clone();capL.rotation.y=capR.rotation.y=Math.PI/2;polG.add(capL,capR);
+const cradleL=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.1,0.14),darkM),cradleR=cradleL.clone();polG.add(cradleL,cradleR);
+const trough=new THREE.Mesh(new THREE.BoxGeometry(0.98,0.012,0.12),darkM);trough.position.set(-0.03,0.916,0);polG.add(trough);
+// medidor de luz
+const senCv=document.createElement("canvas");senCv.width=256;senCv.height=160;const senTex=new THREE.CanvasTexture(senCv);senTex.encoding=THREE.sRGBEncoding;
+const senBox=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.16,0.16),[darkM,darkM,darkM,darkM,new THREE.MeshBasicMaterial({map:senTex,toneMapped:false}),darkM]);senBox.position.set(XW+0.05,BY-0.02,0);senBox.castShadow=true;polG.add(senBox);
+const senWin=new THREE.Mesh(new THREE.CircleGeometry(0.05,32),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}));senWin.rotation.y=-Math.PI/2;senWin.position.set(XW-0.001,BY,0);polG.add(senWin);
+const senStand=stand(XW+0.05,BY-0.1);
+function drawSensor(I){const x=senCv.getContext("2d");x.fillStyle="#0b1216";x.fillRect(0,0,256,160);x.fillStyle="#7fb8d0";x.font="600 20px JetBrains Mono,monospace";x.textAlign="left";x.fillText("LUZ MEDIDA",12,28);
+  x.fillStyle=I<0.01?"#ff8a6a":"#f0f4ea";x.font="900 54px Chivo,sans-serif";x.fillText(Math.round(I*100)+"%",12,92);
+  x.fillStyle="rgba(255,255,255,.1)";x.fillRect(12,112,232,20);x.fillStyle="#ffd84a";x.fillRect(12,112,232*I,20);
+  if(I<0.01){x.fillStyle="#ff8a6a";x.font="600 18px JetBrains Mono,monospace";x.fillText("EXTINÇÃO",130,88)}senTex.needsUpdate=true}
+// setas duplas e anéis
+function dblArrow(color){const g=new THREE.Group(),m=new THREE.MeshBasicMaterial({color,toneMapped:false});
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.0025,0.0025,1,8),m);g.add(shaft);
+  const tp=new THREE.Mesh(new THREE.ConeGeometry(0.009,0.022,12),m),bt=new THREE.Mesh(new THREE.ConeGeometry(0.009,0.022,12),m);bt.rotation.x=Math.PI;g.add(tp,bt);
+  g.userData={shaft,tp,bt};setArrow(g,0.15);return g}
+function setArrow(g,len){const u=g.userData;u.shaft.scale.y=Math.max(0.001,len);u.tp.position.y=len/2+0.011;u.bt.position.y=-len/2-0.011}
+function slice(x,color,n){const g=new THREE.Group();g.position.set(x,BY,0);polG.add(g);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(0.085,0.0022,8,64),new THREE.MeshBasicMaterial({color:0xcfd8e0,transparent:true,opacity:0.75}));ring.rotation.y=Math.PI/2;g.add(ring);
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(0.085,48),new THREE.MeshBasicMaterial({color:0xcfe6ff,transparent:true,opacity:0.07,side:THREE.DoubleSide,depthWrite:false}));disc.rotation.y=Math.PI/2;g.add(disc);
+  const arrows=[];for(let i=0;i<n;i++){const a=dblArrow(color);a.rotation.x=-i*Math.PI/n;g.add(a);arrows.push(a)}return {g,arrows}}
+const sl1=slice(-0.89,0xf3f0e6,6),sl2=slice(-0.63,0xffd84a,1),sl3=slice(0,0xffd84a,1),sl4=slice(XA+0.15,0xf08a4f,1);
+sl1.arrows.forEach(a=>setArrow(a,0.14));setArrow(sl2.arrows[0],0.15);setArrow(sl3.arrows[0],0.15);
+const slLabs=[["natural","#f3f0e6",sl1.g],["polarizada","#ffd84a",sl2.g],["girou","#ffd84a",sl3.g],["filtrada","#f08a4f",sl4.g]].map(([t,c,g])=>{const l=label(t,c,0.2);polG.add(l);l.userData.g=g;return l});
+let senLab=null;const polLabs=[["lâmpada",XL-0.12,"#f3f0e6"],["polarizador",XP,"#cfd8e0"],["analisador",XA,"#f08a4f"],["medidor",XW+0.05,"#cfd8e0"]].map(([t,x,c])=>{const l=label(t,c,0.26);l.position.set(x,BY+0.2,0);polG.add(l);return l});
+senLab=polLabs[3];const tubeLab=label("amostra","#9fd0ea",0.22);polG.add(tubeLab);
+// feixe
+const NW=320,NU=64,A0=0.055,LAM=0.14,KW=2*Math.PI/LAM,FW=2.4;
+const waveGeo=new THREE.BufferGeometry();waveGeo.setAttribute("position",new THREE.BufferAttribute(new Float32Array(NW*3),3));
+const waveLine=new THREE.Line(waveGeo,new THREE.LineBasicMaterial({color:0xffd84a}));waveLine.frustumCulled=false;polG.add(waveLine);
+const ribGeo=new THREE.BufferGeometry();ribGeo.setAttribute("position",new THREE.BufferAttribute(new Float32Array(NW*6),3));
+const ribIdx=[];for(let i=0;i<NW-1;i++){const a=2*i,b=a+1,c=a+2,d=a+3;ribIdx.push(a,b,c,b,d,c)}ribGeo.setIndex(ribIdx);
+const ribbon=new THREE.Mesh(ribGeo,new THREE.MeshBasicMaterial({color:0xffd84a,transparent:true,opacity:0.24,side:THREE.DoubleSide,depthWrite:false}));ribbon.frustumCulled=false;polG.add(ribbon);
+const uLines=[],uPh=[];for(let i=0;i<6;i++){const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(new Float32Array(NU*3),3));
+  const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:0xfff1b0,transparent:true,opacity:0.75}));l.frustumCulled=false;polG.add(l);uLines.push(l);uPh.push(Math.random()*6.28)}
+const coreMat=[0,1].map(()=>new THREE.MeshBasicMaterial({color:0xfff2b0,transparent:true,opacity:0.6,toneMapped:false}));
+const coreA=new THREE.Mesh(new THREE.CylinderGeometry(0.003,0.003,XA-XL,8),coreMat[0]),coreB=new THREE.Mesh(new THREE.CylinderGeometry(0.003,0.003,XW-XA,8),coreMat[1]);
+coreA.rotation.z=coreB.rotation.z=Math.PI/2;coreA.position.set((XA+XL)/2,BY,0);coreB.position.set((XW+XA)/2,BY,0);polG.add(coreA,coreB);
+
+function setTube(){const L=POL.L*DM,XT1=XT0+L,cx=XT0+L/2,s=SAMPLES[POL.sample];
+  tubeGlass.scale.y=L;tubeGlass.position.set(cx,BY,0);liquid.scale.y=L-0.02;liquid.position.set(cx,BY,0);
+  liquidMat.color.setHex(s.col);liquidMat.opacity=POL.sample==="agua"?0.28:0.25+0.4*POL.c/0.8;
+  capL.position.set(XT0,BY,0);capR.position.set(XT1,BY,0);cradleL.position.set(XT0+0.05,0.96,0);cradleR.position.set(XT1-0.05,0.96,0);
+  sl3.g.position.x=XT1+0.075;tubeLab.position.set(cx,BY+0.2,0);
+  slLabs.forEach(l=>l.position.set(l.userData.g.position.x,BY-0.14,0))}
+function alphaWrapped(){let a=alphaNow();return a}
+function polTexts(){
+  const al=alphaNow(),d=(((POL.a-al)%180)+270)%180-90,I=Math.pow(Math.cos(d*RAD_),2),s=SAMPLES[POL.sample];
+  $("oC").textContent=fmt(POL.c,2)+" g/mL";$("oL").textContent=fmt(POL.L,1)+" dm";$("oA").textContent=sgn(POL.a)+"°";
+  $("tAlpha").textContent=sgn(al)+"°";$("tSense").textContent=al>0.05?"dextrógiro (+)":al<-0.05?"levógiro (−)":"inativa (0)";$("tAna").textContent=sgn(POL.a)+"°";$("tI").textContent=Math.round(I*100)+"%";
+  $("polCalc").textContent=s.sp?`α = [α]·l·c = ${sgn(s.sp)} × ${fmt(POL.L)} × ${fmt(POL.c,2)} = ${sgn(al)}°`:`α = 0  (${POL.sample==="rac"?"efeitos se cancelam":"sem molécula quiral"})`;
+  let head;
+  if(POL.sample==="agua")head="Sem molécula quiral na amostra, o plano da luz <b>não gira</b>.";
+  else if(POL.sample==="rac")head="Mistura racêmica: metade das moléculas gira o plano para cada lado. Os efeitos se cancelam e <b>α = 0</b>.";
+  else head=`O ${s.n} gira o plano da luz para a ${al>0?"<b>direita</b> (horário), dextrógiro":"<b>esquerda</b> (anti-horário), levógiro"}: <b>α = ${sgn(al)}°</b>.`;
+  let tail;
+  if(Math.abs(d)<1)tail="Analisador alinhado com o plano: brilho <b>máximo</b>. Esse ângulo é o α medido.";
+  else if(Math.abs(Math.abs(d)-90)<1.5)tail="Analisador cruzado com o plano: <b>extinção</b> quase total.";
+  else tail="Gire o analisador até o brilho ficar máximo, ou toque em <b>Ajustar analisador</b>.";
+  $("note3").innerHTML=head+" "+tail;
+  drawObs(al,d,I)}
+function drawObs(al,d,I){const c=$("obs"),x=c.getContext("2d"),W=c.width,cx=W/2,R=W*0.36;x.clearRect(0,0,W,W);
+  const P=(deg,r)=>[cx+r*Math.sin(deg*RAD_),cx-r*Math.cos(deg*RAD_)];
+  x.strokeStyle="rgba(255,255,255,.28)";x.lineWidth=2;x.beginPath();x.arc(cx,cx,R,0,Math.PI*2);x.stroke();
+  for(let a=0;a<360;a+=30){const p=P(a,R*0.9),q=P(a,R);x.beginPath();x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);x.stroke()}
+  const line=(deg,r,col,w,dash)=>{const p=P(deg,r),q=P(deg+180,r);x.strokeStyle=col;x.lineWidth=w;x.setLineDash(dash||[]);x.beginPath();x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);x.stroke();x.setLineDash([])};
+  line(0,R*0.85,"rgba(255,255,255,.4)",3,[8,7]);
+  if(Math.abs(al)>0.05){x.strokeStyle="rgba(255,216,74,.5)";x.lineWidth=3;x.beginPath();x.arc(cx,cx,R*0.5,-Math.PI/2,-Math.PI/2+al*RAD_,al<0);x.stroke()}
+  line(al,R*0.85,"#ffd84a",5);const t=P(al,R*0.85);x.fillStyle="#ffd84a";x.beginPath();x.arc(t[0],t[1],6,0,7);x.fill();
+  line(POL.a,R*0.95,"#f08a4f",4,[2,0]);
+  x.fillStyle="rgba(240,138,79,"+(0.15+0.6*I)+")";x.beginPath();x.arc(cx,cx,R*0.12,0,7);x.fill();
+  x.fillStyle="#9aa3a8";x.font="600 20px JetBrains Mono,monospace";x.textAlign="center";x.fillText("0°",cx,cx-R-8)}
+
+const polHandlers={
+  sSel:e=>{POL.sample=e.target.value;setTube();POL.auto=null;polTexts()},
+  sC:e=>{POL.c=parseFloat(e.target.value);setTube();polTexts()},
+  sL:e=>{POL.L=parseFloat(e.target.value);setTube();polTexts()},
+  sA:e=>{POL.a=parseFloat(e.target.value);POL.auto=null;polTexts()}};
+Object.keys(polHandlers).forEach(id=>$(id).addEventListener("input",polHandlers[id]));
+$("bAuto").onclick=()=>{let t=alphaNow();POL.auto=Math.max(-90,Math.min(90,t))};
+$("bWave").onclick=e=>{POL.waves=!POL.waves;e.currentTarget.classList.toggle("on",POL.waves)};
+function polUpdate(dt,dA){
+  POL.t+=dA;
+  if(POL.auto!==null){const dd=POL.auto-POL.a;POL.a+=dd*Math.min(1,dt*4+0.001);if(Math.abs(dd)<0.05){POL.a=POL.auto;POL.auto=null}$("sA").value=POL.a;polTexts()}
+  const inline=camera.position.x>XA+0.1&&Math.abs(camera.position.z)<0.4;[...slLabs,...polLabs,tubeLab].forEach(o=>o.visible=!inline||o===senLab&&false);
+  const behind=camera.position.x>XW&&Math.abs(camera.position.z)<0.4;[senBox,senWin,senStand,senLab].forEach(o=>o.visible=!behind);
+  const al=alphaNow()*RAD_,pa=POL.a*RAD_,L=POL.L*DM,XT1=XT0+L,cd=Math.cos(pa-al),I=cd*cd;
+  const pos=waveGeo.attributes.position.array,rp=ribGeo.attributes.position.array;
+  for(let i=0;i<NW;i++){const x=XP+(XW-XP)*i/(NW-1);let ph,amp=A0;
+    if(x<XT0)ph=0;else if(x<XT1)ph=al*(x-XT0)/L;else if(x<XA)ph=al;else{ph=pa;amp=A0*cd}
+    const s=amp*Math.sin(KW*x-2*Math.PI*FW*POL.t),y=BY+s*Math.cos(ph),z=-s*Math.sin(ph);
+    pos[i*3]=x;pos[i*3+1]=y;pos[i*3+2]=z;rp[i*6]=x;rp[i*6+1]=BY;rp[i*6+2]=0;rp[i*6+3]=x;rp[i*6+4]=y;rp[i*6+5]=z}
+  waveGeo.attributes.position.needsUpdate=true;ribGeo.attributes.position.needsUpdate=true;
+  for(let j=0;j<6;j++){const arr=uLines[j].geometry.attributes.position.array,ang=j*Math.PI/6;
+    for(let i=0;i<NU;i++){const x=XL+(XP-XL)*i/(NU-1),s=A0*0.8*Math.sin(KW*x-2*Math.PI*FW*POL.t+uPh[j]+1.5*Math.sin(POL.t*0.7+j*1.3));arr[i*3]=x;arr[i*3+1]=BY+s*Math.cos(ang);arr[i*3+2]=-s*Math.sin(ang)}
+    uLines[j].geometry.attributes.position.needsUpdate=true;uLines[j].visible=POL.waves}
+  waveLine.visible=ribbon.visible=POL.waves;
+  sl3.arrows[0].rotation.x=-al;sl4.arrows[0].rotation.x=-pa;setArrow(sl4.arrows[0],0.02+0.14*Math.abs(cd));
+  anaG.rotation.x=-pa;
+  coreMat[1].opacity=0.12+0.6*I;senWin.material.color.setRGB(0.06+0.94*I,0.06+0.94*I,0.05+0.9*I);
+  const ri=Math.round(I*100);if(ri!==POL.lastI){POL.lastI=ri;drawSensor(I)}}
+
+/* ---------- câmera: visões, órbita e livre ---------- */
+const HOMEV={opt:{p:[0.95,1.55,1.7],t:[-0.2,1.22,-0.05]},plana:{p:[0,1.66,2.75],t:[0,1.3,-0.05]},pol:{p:[1.3,1.55,1.85],t:[0.02,1.12,0]}};
+const POLV={all:HOMEV.pol,tube:{p:[0.35,1.38,0.85],t:[-0.15,BY-0.03,0]},ana:{p:[1.02,1.32,0.72],t:[0.5,BY,0]},obs:{p:[1.34,BY+0.005,0.0],t:[-0.2,BY,0]}};
+const portrait=()=>innerHeight>innerWidth;
+function panelFactor(){if(portrait())return 1;const w=innerWidth,dock=$("dock"),dw=dock.classList.contains("min")?0:dock.getBoundingClientRect().width+16,card=document.querySelector(".card:not([hidden])"),cw=card&&card.open&&!document.body.classList.contains("clean")?card.getBoundingClientRect().width+16:0,base=w-dw;return Math.max(1,Math.min(1.5,base/Math.max(200,base-cw)))}
+function viewPair(v,isHome){const t=V(...v.t),p=V(...v.p);if(isHome!==false){p.sub(t).multiplyScalar(portrait()?(MODE==="pol"?1.9:1.75):panelFactor()).add(t)}return {p,t}}
+function tweenTo(p,t,instant){if(CAM.mode==="free")setCam("orb");
+  if(instant){camera.position.copy(p);controls.target.copy(t);CAM.tween=null;controls.update();return}
+  CAM.tween={t:0,p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t}}
+function goHome(instant){const v=viewPair(HOMEV[MODE]);tweenTo(v.p,v.t,instant)}
+const FOCUS={opt:[["L","Molécula esq."],["R","Molécula dir."],["all","Geral"]],plana:[["L","Molécula esq."],["R","Molécula dir."],["all","Geral"]],pol:[["all","Geral"],["tube","Amostra"],["ana","Analisador"],["obs","Vista do observador"]]};
+function renderFocus(){$("focusRow").innerHTML=FOCUS[MODE].map(([k,t])=>`<button data-f="${k}">${t}</button>`).join("");
+  $("focusRow").querySelectorAll("button").forEach(b=>b.onclick=()=>{focusTo(b.dataset.f);closePop()})}
+function focusTo(key){
+  if(MODE==="pol"){const v=key==="all"?viewPair(POLV.all):viewPair(POLV[key],key==="obs"?false:true);
+    tweenTo(v.p,v.t);return}
+  if(key==="all"){goHome();return}
+  const m=key==="L"?(MODE==="opt"?molL:pL):(MODE==="opt"?molR:pR),tgt=m.getWorldPosition(new THREE.Vector3());
+  if(CAM.mode==="free")setCam("orb");
+  const p1=tgt.clone().add(camera.position.clone().sub(controls.target).normalize().multiplyScalar(0.7));
+  CAM.tween={t:0,p0:camera.position.clone(),t0:controls.target.clone(),p1,t1:tgt}}
+function setCam(m){CAM.mode=m;const free=m==="free";document.body.classList.toggle("free",free);
+  $("cOrb").classList.toggle("on",!free);$("cFree").classList.toggle("on",free);$("cOrb").setAttribute("aria-pressed",!free);$("cFree").setAttribute("aria-pressed",free);
+  $("joy").hidden=$("ud").hidden=!free;controls.enabled=!free;
+  $("camHint").textContent=free?"Joystick anda. Arraste a tela para olhar. ▲▼ sobem e descem.":"Arraste para girar. Pinça ou roda aproxima.";
+  if(free){const e=new THREE.Euler().setFromQuaternion(camera.quaternion,"YXZ");CAM.yaw=e.y;CAM.pitch=e.x;setDock(false);document.querySelectorAll(".card").forEach(c=>c.open=false);toast("Joystick anda · arraste a tela para olhar")}
+  else{const d=new THREE.Vector3();camera.getWorldDirection(d);controls.target.copy(camera.position).addScaledVector(d,0.5);controls.update()}}
+$("cOrb").onclick=()=>{setCam("orb");closePop()};$("cFree").onclick=()=>{setCam("free");closePop()};
+canvas.addEventListener("pointerdown",e=>{if(CAM.mode!=="free"||CAM.look)return;CAM.look={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener("pointermove",e=>{const L=CAM.look;if(!L||L.id!==e.pointerId)return;const k=0.005*(camera.fov/40);
+  CAM.yaw-=(e.clientX-L.x)*k;CAM.pitch=Math.max(-1.5,Math.min(1.5,CAM.pitch-(e.clientY-L.y)*k));L.x=e.clientX;L.y=e.clientY});
+const endLook=e=>{if(CAM.look&&CAM.look.id===e.pointerId)CAM.look=null};canvas.addEventListener("pointerup",endLook);canvas.addEventListener("pointercancel",endLook);
+canvas.addEventListener("wheel",e=>{if(CAM.mode!=="free")return;e.preventDefault();const d=new THREE.Vector3();camera.getWorldDirection(d);camera.position.addScaledVector(d,-e.deltaY*0.0008)},{passive:false});
+const joy=$("joy"),knob=$("knob");let joyId=null;
+function joyMove(e){const r=joy.getBoundingClientRect(),R=r.width/2;let dx=e.clientX-(r.left+R),dy=e.clientY-(r.top+R);const l=Math.hypot(dx,dy),mx=R*0.72;if(l>mx){dx*=mx/l;dy*=mx/l}
+  knob.style.transform=`translate(${dx}px,${dy}px)`;CAM.jx=dx/mx;CAM.jy=dy/mx}
+joy.addEventListener("pointerdown",e=>{joyId=e.pointerId;joy.setPointerCapture(e.pointerId);joyMove(e)});
+joy.addEventListener("pointermove",e=>{if(e.pointerId===joyId)joyMove(e)});
+const joyEnd=e=>{if(e.pointerId!==joyId)return;joyId=null;CAM.jx=CAM.jy=0;knob.style.transform=""};joy.addEventListener("pointerup",joyEnd);joy.addEventListener("pointercancel",joyEnd);
+[["bUp",1],["bDn",-1]].forEach(([id,v])=>{const b=$(id);b.addEventListener("pointerdown",e=>{e.preventDefault();CAM.vert=v;b.setPointerCapture(e.pointerId)});const st=()=>{if(CAM.vert===v)CAM.vert=0};b.addEventListener("pointerup",st);b.addEventListener("pointercancel",st)});
+const typing=()=>/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
+addEventListener("keydown",e=>{CAM.keys[e.code]=true;if(typing())return;if(e.code==="KeyH")setClean(!document.body.classList.contains("clean"));if(e.code==="KeyP")setPause(!paused)});
+addEventListener("keyup",e=>{CAM.keys[e.code]=false});
+function camUpdate(dt){
+  if(CAM.tween){const T=CAM.tween;T.t=Math.min(1,T.t+dt*1.6);const k=1-Math.pow(1-T.t,3);camera.position.lerpVectors(T.p0,T.p1,k);controls.target.lerpVectors(T.t0,T.t1,k);if(T.t>=1)CAM.tween=null}
+  if(CAM.mode!=="free"){controls.update();return}
+  const K=CAM.keys;let fx=CAM.jx+((K.KeyD||K.ArrowRight)?1:0)-((K.KeyA||K.ArrowLeft)?1:0),fy=CAM.jy+((K.KeyS||K.ArrowDown)?1:0)-((K.KeyW||K.ArrowUp)?1:0);
+  const vy=CAM.vert+((K.KeyE||K.Space)?1:0)-((K.KeyQ||K.ShiftLeft)?1:0);
+  camera.quaternion.setFromEuler(new THREE.Euler(CAM.pitch,CAM.yaw,0,"YXZ"));
+  const fwd=new THREE.Vector3();camera.getWorldDirection(fwd);const right=new THREE.Vector3().crossVectors(fwd,V(0,1,0)).normalize();
+  const sp=0.55*dt;camera.position.addScaledVector(fwd,-fy*sp).addScaledVector(right,fx*sp).addScaledVector(V(0,1,0),vy*sp*0.8);
+  const P=camera.position;P.x=Math.max(-5,Math.min(5,P.x));P.y=Math.max(0.12,Math.min(3.5,P.y));P.z=Math.max(-2.4,Math.min(5,P.z))}
+
+/* ---------- interface ---------- */
+let toastT=0;function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200)}
+function closePop(){if(!$("camPop").hidden){$("camPop").hidden=true;$("bCam").setAttribute("aria-expanded","false")}}
+$("bCam").onclick=e=>{e.stopPropagation();const h=$("camPop").hidden;$("camPop").hidden=!h;$("bCam").setAttribute("aria-expanded",h)};
+document.addEventListener("pointerdown",e=>{if(!$("camPop").hidden&&!$("camPop").contains(e.target)&&!$("bCam").contains(e.target))closePop()});
+function setPause(p){paused=p;document.body.classList.toggle("paused",p);$("tPause").textContent=p?"Continuar":"Pausar";$("bPause").setAttribute("aria-label",p?"Continuar animação":"Pausar animação")}
+$("bPause").onclick=()=>setPause(!paused);
+function setClean(c){document.body.classList.toggle("clean",c);setTimeout(viewShift,0);$("tClean").textContent=c?"Mostrar":"Ocultar";$("bClean").setAttribute("aria-label",c?"Mostrar painéis":"Ocultar painéis")}
+$("bClean").onclick=()=>setClean(!document.body.classList.contains("clean"));
+function setDock(open){$("dock").classList.toggle("min",!open);$("dockHead").setAttribute("aria-expanded",open);viewShift()}
+$("dockHead").onclick=()=>setDock($("dock").classList.contains("min"));
+function viewShift(){const w=innerWidth,h=innerHeight,dock=$("dock"),d=dock.getBoundingClientRect(),clean=document.body.classList.contains("clean"),min=dock.classList.contains("min");
+  const card=document.querySelector(".card:not([hidden])"),cr=card&&card.open&&!clean?card.getBoundingClientRect():null;let ox=0,oy=0;
+  if(w>h){const left=cr?cr.right:0,right=min?w:d.left;ox=Math.round(w/2-(left+right)/2)}
+  else{const topE=cr?cr.bottom:52,botE=min?h:d.top;oy=Math.round(h/2-(topE+botE)/2)}
+  if(ox||oy)camera.setViewOffset(w,h,ox,oy,w,h);else camera.clearViewOffset();camera.updateProjectionMatrix()}
+document.querySelectorAll(".card").forEach(c=>c.addEventListener("toggle",viewShift));
+try{new ResizeObserver(()=>viewShift()).observe($("dock"))}catch(e){}
+function setMode(m){MODE=m;const o=m==="opt",p=m==="plana",pl=m==="pol";
+  [molL,molR,labL,labR,mirrorG,mirLab,board].forEach(x=>x.visible=o);board2.visible=p;board3.visible=pl;polG.visible=pl;kit.visible=!pl;bases.forEach(b=>b.visible=!pl);
+  if(p&&!pL)loadPlana(0);[pL,pR,...pLabs].forEach(x=>x&&(x.visible=p));
+  document.querySelectorAll("[data-for]").forEach(el=>el.hidden=el.dataset.for!==m);
+  document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
+  renderFocus();closePop();goHome();if(pl)polTexts();viewShift();
+  try{history.replaceState(null,"",{plana:"#plana",pol:"#polarimetro"}[m]||"#")}catch(e){}}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+
+/* ---------- laço ---------- */
+function resize(){const w=innerWidth,h=innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?62:40;camera.updateProjectionMatrix();viewShift()}
+addEventListener("resize",resize);
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;let last=performance.now(),tt=0;
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;tt+=dt;const dA=paused?0:dt;
+  if(anim){anim.t=Math.min(1,anim.t+dA*(reduce?5:0.7));const e=anim.t<.5?4*anim.t**3:1-Math.pow(-2*anim.t+2,3)/2;
+    molR.position.lerpVectors(anim.p0,anim.p1,e);molR.position.y+=Math.sin(Math.PI*e)*(anim.back?0.08:0.18);THREE.Quaternion.slerp(anim.q0,anim.q1,molR.quaternion,e);
+    if(anim.t>=1){if(anim.back){overlap=false;anim=null;setNote("free")}else{tint();setNote("result");anim=null}}}
+  [molL,molR].forEach(m=>{if(m.userData.halo.visible)m.userData.halo.material.opacity=0.16+0.1*Math.sin(tt*3)});
+  if(MODE==="plana"&&pL){if(pSpin&&!drag){pL.rotation.y+=dA*0.5;pR.rotation.y+=dA*0.5}[pL,pR].forEach(m=>m.userData.halos.forEach(h=>h.material.opacity=0.2+0.12*Math.sin(tt*3)))}
+  if(MODE==="pol")polUpdate(dt,dA);
+  camUpdate(dt);renderer.render(scene,camera);requestAnimationFrame(loop)}
+
+/* ---------- início ---------- */
+resize();setTube();drawSensor(1);setCam("orb");
+const big=innerWidth>=900&&innerHeight>=520;
+document.querySelectorAll(".card").forEach(c=>c.open=big);
+renderFocus();
+const h0=location.hash;setMode(h0==="#plana"?"plana":h0==="#polarimetro"?"pol":"opt");goHome(true);
+requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
